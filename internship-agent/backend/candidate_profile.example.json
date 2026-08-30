@@ -1,0 +1,28 @@
+{
+  "first_name": "Charan",
+  "last_name": "Chilukuri",
+  "name": "Chilukuri Charan Sri Teja",
+  "email": "charanchilukuri2299@gamil.com",
+  "phone": "+91-7938349343",
+  "linkedin_url": "https://linkedin.com/in/your-handle",
+  "github_url": "https://github.com/your-handle",
+  "education": "B.Tech, AI & Machine Learning, SRKR Engineering College (CGPA 9.31, Class of 2028)",
+  "skills": [
+    "Python", "FastAPI", "LangChain", "LangGraph", "RAG pipelines",
+    "Node.js", "Express", "React", "PostgreSQL", "MongoDB", "Prisma",
+    "JWT auth", "AWS (EC2, RDS, S3, IAM)", "Docker", "Git"
+  ],
+  "projects": [
+    {
+      "title": "Event Registration Automation System",
+      "description": "Full-stack event registration system with QR-code delivery, role-based auth, and Cloudinary-backed storage.",
+      "tech": ["Node.js", "Express", "PostgreSQL", "Prisma", "React", "Cloudinary", "Brevo"]
+    },
+    {
+      "title": "AI Travel Agent",
+      "description": "LangGraph-based conversational travel booking agent with human-in-the-loop booking confirmation.",
+      "tech": ["LangGraph", "LangChain", "Gemini API", "FastAPI", "PostgreSQL", "React"]
+    }
+  ],
+  "base_resume_text": "Chilukuri Charan Sri Teja\n+91 7993838173 | charanchilukuri2299@gmail.com | linkedin.com/in/charan-sri-teja-chilukuri | github.com/CharanSriTeja |\nBhimavaram, Andhra Pradesh, India\nEducation\nSRKR Engineering College Bhimavaram, India\nB.Tech in Artificial Intelligence & Machine Learning; CGPA: 9.32/10 Expected 2028\nTechnical Skills\nFrontend: React.js, JavaScript (ES6+), HTML5, CSS3, Bootstrap, Responsive UI Components\nAPIs & Data: REST API Integration, JSON, Asynchronous Programming\nBackend: Node.js, Express.js, Python, FastAPI\nDatabases: MongoDB, MySQL, PostgreSQL\nTools & Workflow: Git, GitHub, Agile/Sprint Workflow, Code Reviews, Docker, Postman, Render, Vercel\nAI Integration (Bonus): LangChain, LangGraph, RAG, Prompt Engineering, Gemini API\nLeadership Experience\nTeam Lead September 2025\nEcoLearn – Smart India Hackathon (SIH) 2025 Remote\n• Led a team of engineers in a time-bound hackathon, coordinating Git/GitHub workflow and task division to build and\nship a gamified environmental-education platform end to end as a functional MVP from scratch\nProjects\nEcoLearn (SIH 2025) | React.js, Node.js, Express.js, MongoDB, Gemini API Live Demo | GitHub\n• Built reusable, responsive React.js components for a gamified education platform with separate student, teacher, and\nschool views\n• Integrated the Gemini API via REST calls with JSON request/response handling to power an AI chatbot and\nauto-generated quizzes\n• Designed a points and leaderboard system where teachers assign work and students earn points for completed activities\nEOC Website – Event Organizing Cell | React.js, Node.js, Express.js, MongoDB, Brevo Live Demo | GitHub\n• Built responsive, role-aware React.js frontends for a three-role platform (admin, club coordinators, students)\nconsuming REST APIs for events and registration\n• Implemented email-verification and password-reset flows using time-limited JWT tokens emailed via Brevo, validated\nserver-side before granting account access\nSmart Admission System – SRKR CSE Department | Node.js, Express.js, MongoDB, WhatsApp API GitHub\n• Built an admin dashboard and automated counseling workflow for EAPCET 2026 admissions, handling up to 500\nstudents with sequential five-step counter enforcement\n• Automated WhatsApp token notifications end-to-end and designed compound database indexes to guarantee\nidempotent token generation under concurrent load\n• Diagnosed and fixed IST timezone bugs affecting scheduling accuracy in a production-facing admissions tool\nAI Travel Agent | Python, LangGraph, LangChain, Gemini API, Node.js/Express, PostgreSQL Live Demo | GitHub\n• Designed and built a custom Node.js/Express REST API from scratch as the backend for a conversational flight-search\nagent, including airport and coordinate resolution logic for accurate itinerary generation\n• Implemented JWT-based authentication and a PostgreSQL-backed persistence layer, both verified working in the\ndeployed production environment\nCertifications\nNPTEL – Programming, Data Structures and Algorithms using Python (March 2025)\nMachine Learning Specialization – DeepLearning.AI / Coursera\nLangChain for LLM Application Development – LangChain Academy\nIntroduction to LangGraph – LangChain Academy"
+}

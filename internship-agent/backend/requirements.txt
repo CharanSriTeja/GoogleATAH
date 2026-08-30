@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+google-cloud-firestore
+google-genai
+playwright
+google-auth-oauthlib
+google-adk
+google-api-python-client
+firebase-admin>=6.5.0
+fpdf2
