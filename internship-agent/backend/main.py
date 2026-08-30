@@ -11,9 +11,10 @@ if sys.platform == "win32":
 from datetime import datetime
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -27,7 +28,9 @@ load_dotenv(".env")
 try:
     if not firebase_admin._apps:
         cred = credentials.Certificate("fourth-splice-506406-p8-firebase-adminsdk-fbsvc-2bcbc288f7.json")
-        firebase_admin.initialize_app(cred)
+        firebase_admin.initialize_app(cred, {
+            'storageBucket': f"{os.environ.get('GOOGLE_CLOUD_PROJECT')}.appspot.com"
+        })
 except Exception as e:
     print(f"Failed to initialize Firebase Admin: {e}")
     # Allow app to start without it for local dev, but auth will fail
@@ -52,6 +55,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 session_service = InMemorySessionService()
 runner = Runner(agent=root_agent, app_name="internship_agent", session_service=session_service)
@@ -108,15 +112,108 @@ async def get_profile(uid: str = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Candidate profile not found.")
     return doc.to_dict()
 
+async def handle_resume_upload(uid: str, resume_file: UploadFile = None, base_resume_text: str = None) -> tuple[str, str]:
+    text = base_resume_text or ""
+    url = None
+    if resume_file and resume_file.filename:
+        content = await resume_file.read()
+        if resume_file.filename.endswith(".pdf"):
+            import pdfplumber
+            import io
+            with pdfplumber.open(io.BytesIO(content)) as pdf:
+                text = "\n".join([page.extract_text() or "" for page in pdf.pages])
+        elif resume_file.filename.endswith(".docx"):
+            import docx
+            import io
+            doc = docx.Document(io.BytesIO(content))
+            text = "\n".join([para.text for para in doc.paragraphs])
+            
+        import os
+        ext = resume_file.filename.split(".")[-1]
+        file_name = f"{uid}_original.{ext}"
+        local_path = os.path.join("uploads", "base_resumes", file_name)
+        with open(local_path, "wb") as f:
+            f.write(content)
+        
+        url = f"http://localhost:8000/uploads/base_resumes/{file_name}"
+    return text, url
+
 @app.post("/onboard")
-async def onboard(profile: CandidateProfile, uid: str = Depends(get_current_user)):
-    _profile_ref(uid).set(profile.model_dump())
+async def onboard(
+    first_name: str = Form(""),
+    last_name: str = Form(""),
+    email: str = Form(""),
+    phone: str = Form(""),
+    linkedin_url: str = Form(""),
+    github_url: str = Form(""),
+    education: str = Form(""),
+    skills: str = Form(""),
+    base_resume_text: str = Form(""),
+    resume_file: Optional[UploadFile] = File(None),
+    uid: str = Depends(get_current_user)
+):
+    text, url = await handle_resume_upload(uid, resume_file, base_resume_text)
+    skill_list = [s.strip() for s in skills.split(",")] if skills else []
+    
+    profile = {
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "phone": phone,
+        "linkedin_url": linkedin_url,
+        "github_url": github_url,
+        "education": education,
+        "skills": skill_list,
+        "projects": [],
+        "base_resume_text": text
+    }
+    if url:
+        profile["base_resume_original_url"] = url
+        
+    _profile_ref(uid).set(profile)
     return {"status": "success"}
 
 @app.patch("/profile")
-async def update_profile(profile_updates: dict, uid: str = Depends(get_current_user)):
-    _profile_ref(uid).update(profile_updates)
+async def update_profile(
+    first_name: str = Form(None),
+    last_name: str = Form(None),
+    email: str = Form(None),
+    phone: str = Form(None),
+    linkedin_url: str = Form(None),
+    github_url: str = Form(None),
+    education: str = Form(None),
+    skills: str = Form(None),
+    base_resume_text: str = Form(None),
+    resume_file: Optional[UploadFile] = File(None),
+    uid: str = Depends(get_current_user)
+):
+    text, url = await handle_resume_upload(uid, resume_file, base_resume_text)
+    
+    updates = {}
+    if first_name is not None: updates["first_name"] = first_name
+    if last_name is not None: updates["last_name"] = last_name
+    if email is not None: updates["email"] = email
+    if phone is not None: updates["phone"] = phone
+    if linkedin_url is not None: updates["linkedin_url"] = linkedin_url
+    if github_url is not None: updates["github_url"] = github_url
+    if education is not None: updates["education"] = education
+    if skills is not None: updates["skills"] = [s.strip() for s in skills.split(",")] if skills else []
+    
+    if text: updates["base_resume_text"] = text
+    if url: updates["base_resume_original_url"] = url
+    
+    _profile_ref(uid).update(updates)
     return {"status": "success"}
+
+@app.get("/applications/{id}/resume")
+async def get_application_resume(id: str, uid: str = Depends(get_current_user)):
+    app_doc = get_application(id)
+    if "error" in app_doc:
+        raise HTTPException(status_code=404, detail="Application not found")
+    url = app_doc.get("resume_pdf_url")
+    if not url:
+        raise HTTPException(status_code=404, detail="Resume PDF not found for this application")
+    return RedirectResponse(url=url, status_code=307)
 
 
 async def _stream_agent_response(uid: str, session_id: str, message: str):

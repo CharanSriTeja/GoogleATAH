@@ -75,7 +75,7 @@ def save_application(
             "skill_gaps": skill_gaps,
             "status": "drafted",
             "job_url": job_url,
-            "resume_variant_path": None,
+            "resume_pdf_url": None,
             "created_at": now,
             "updated_at": now,
             "follow_up_date": None,

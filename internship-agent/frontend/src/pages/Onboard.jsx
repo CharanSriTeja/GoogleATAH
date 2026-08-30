@@ -14,7 +14,8 @@ export default function Onboard() {
     github_url: '',
     education: '',
     skills: '',
-    base_resume_text: ''
+    base_resume_text: '',
+    resume_file: null
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -25,16 +26,27 @@ export default function Onboard() {
     setLoading(true);
     setSuccess(false);
     
-    const payload = {
-      ...formData,
-      skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
-      projects: []
-    };
+    const data = new FormData();
+    data.append('first_name', formData.first_name);
+    data.append('last_name', formData.last_name);
+    data.append('email', formData.email);
+    data.append('phone', formData.phone);
+    data.append('linkedin_url', formData.linkedin_url);
+    data.append('github_url', formData.github_url);
+    data.append('education', formData.education);
+    data.append('skills', formData.skills);
+    data.append('base_resume_text', formData.base_resume_text);
+    if (formData.resume_file) {
+      data.append('resume_file', formData.resume_file);
+    }
 
     try {
       const token = await auth.currentUser?.getIdToken();
-      await axios.post('http://localhost:8000/onboard', payload, {
-        headers: { Authorization: `Bearer ${token}` }
+      await axios.post('http://localhost:8000/onboard', data, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
       setSuccess(true);
       setTimeout(() => navigate('/app'), 1000);
@@ -130,10 +142,18 @@ export default function Onboard() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Base Resume Text</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Resume File (Optional, overrides text below)</label>
             <div className="relative">
               <FileText className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-              <textarea required rows={6} className={inputClass} value={formData.base_resume_text} onChange={e => setFormData({...formData, base_resume_text: e.target.value})} placeholder="Paste your raw resume text here..." />
+              <input type="file" accept=".pdf,.docx" className={`${inputClass} !py-2`} onChange={e => setFormData({...formData, resume_file: e.target.files[0]})} />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Base Resume Text (Fallback)</label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+              <textarea rows={6} className={inputClass} value={formData.base_resume_text} onChange={e => setFormData({...formData, base_resume_text: e.target.value})} placeholder="Paste your raw resume text here..." />
             </div>
           </div>
 

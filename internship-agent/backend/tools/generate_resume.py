@@ -1,8 +1,33 @@
 import os
 import tempfile
 import base64
+import datetime
 from fpdf import FPDF
-from tools.firestore_state import _app_collection
+import shutil
+from google import genai
+from tools.firestore_state import _app_collection, current_uid
+
+def save_local_pdf(local_path: str, destination_file_name: str) -> str:
+    """Save a file to the local uploads directory and return its local URL."""
+    dest_path = os.path.join("uploads", "resumes", destination_file_name)
+    shutil.copy2(local_path, dest_path)
+    url = f"http://localhost:8000/uploads/resumes/{destination_file_name}"
+    return url
+
+def extract_bullets_from_resume_text(base_resume_text: str) -> list[str]:
+    """Use Gemini to extract genuine experience/project bullet points from raw extracted resume text."""
+    prompt = f"Extract the experience/project bullet points from this resume text as a JSON list of strings, using only what's written -- do not add or embellish anything: {base_resume_text}"
+    client = genai.Client(http_options={'api_version': 'v1alpha'})
+    response = client.models.generate_content(
+        model="gemini-3.5-flash-lite",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(response_mime_type="application/json")
+    )
+    import json
+    try:
+        return json.loads(response.text)
+    except:
+        return []
 
 def generate_resume_pdf(application_id: str, candidate_profile: dict, tailored_bullets: list[str] = None) -> dict:
     """Generate a PDF resume in Jake's format and save it to the application.
@@ -88,12 +113,10 @@ def generate_resume_pdf(application_id: str, candidate_profile: dict, tailored_b
                 pdf.bullet_point("Technologies: " + ", ".join(proj.get("tech")))
             pdf.ln(2)
     elif candidate_profile.get("base_resume_text"):
-        # Very rough fallback for base text
-        lines = candidate_profile.get("base_resume_text").split("\n")
-        # Just grab project-looking lines
-        for line in lines[10:30]:
-            if line.strip().startswith("•") or line.strip().startswith("-"):
-                pdf.bullet_point(line.strip()[1:].strip())
+        # Use Gemini to extract bullets from unstructured text
+        bullets = extract_bullets_from_resume_text(candidate_profile.get("base_resume_text"))
+        for bullet in bullets:
+            pdf.bullet_point(bullet)
 
     # Save to temp file
     temp_dir = tempfile.gettempdir()
@@ -101,18 +124,20 @@ def generate_resume_pdf(application_id: str, candidate_profile: dict, tailored_b
     # For Playwright, it also expects "generated_resume.pdf" in some fallback, but we will return the real path
     pdf.output(pdf_path)
     
-    # Also save as base64 in Firestore for download
-    with open(pdf_path, "rb") as f:
-        pdf_bytes = f.read()
+    # Save locally
+    uid = current_uid.get()
+    file_name = f"{uid}_{application_id}.pdf"
+    local_url = save_local_pdf(pdf_path, file_name)
     
-    b64_string = base64.b64encode(pdf_bytes).decode("utf-8")
+    # Clean up temp file
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
     
     _app_collection().document(application_id).update({
-        "resume_pdf_base64": b64_string,
-        "resume_variant_path": pdf_path
+        "resume_pdf_url": local_url
     })
     
     return {
         "success": True,
-        "resume_pdf_path": pdf_path
+        "resume_pdf_url": local_url
     }

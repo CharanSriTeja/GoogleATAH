@@ -119,7 +119,7 @@ export default function ApplicationDetail() {
           </div>
         </div>
         
-        {app.resume_pdf_base64 && (
+        {app.resume_pdf_url && (
           <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-slate-800">Tailored Resume</h3>
@@ -127,17 +127,12 @@ export default function ApplicationDetail() {
             </div>
             <button 
               onClick={() => {
-                const linkSource = `data:application/pdf;base64,${app.resume_pdf_base64}`;
-                const downloadLink = document.createElement("a");
-                const fileName = `Tailored_Resume_${app.company.replace(/\s+/g, '_')}.pdf`;
-                downloadLink.href = linkSource;
-                downloadLink.download = fileName;
-                downloadLink.click();
+                window.open(app.resume_pdf_url, "_blank");
               }}
               className="primary-btn flex items-center"
             >
               <FileText className="h-4 w-4 mr-2" />
-              Download PDF
+              View PDF
             </button>
           </div>
         )}

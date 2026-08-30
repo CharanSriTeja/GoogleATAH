@@ -10,3 +10,7 @@ google-adk
 google-api-python-client
 firebase-admin>=6.5.0
 fpdf2
+google-cloud-storage
+pdfplumber
+python-docx
+python-multipart
