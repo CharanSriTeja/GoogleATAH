@@ -45,7 +45,7 @@ export default function Dashboard() {
     try {
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await axios.get('http://localhost:8000/applications', {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setApps(res.data);

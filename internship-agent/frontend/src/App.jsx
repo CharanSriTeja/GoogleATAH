@@ -30,7 +30,7 @@ const EnsureProfile = ({ children }) => {
   React.useEffect(() => {
     if (user) {
       user.getIdToken().then(token => {
-        axios.get('http://localhost:8000/profile', {
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(() => setHasProfile(true))

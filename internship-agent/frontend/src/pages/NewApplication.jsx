@@ -32,7 +32,7 @@ export default function NewApplication() {
     try {
       const token = await auth.currentUser?.getIdToken();
       
-      const response = await fetch('http://localhost:8000/applications/stream', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

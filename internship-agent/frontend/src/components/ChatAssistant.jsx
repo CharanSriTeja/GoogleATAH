@@ -64,7 +64,7 @@ export default function ChatAssistant() {
     try {
       const token = await auth.currentUser?.getIdToken();
       
-      const response = await fetch('http://localhost:8000/chat/stream', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

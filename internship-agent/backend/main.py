@@ -128,14 +128,19 @@ async def handle_resume_upload(uid: str, resume_file: UploadFile = None, base_re
             doc = docx.Document(io.BytesIO(content))
             text = "\n".join([para.text for para in doc.paragraphs])
             
+        import cloudinary.uploader
         import os
         ext = resume_file.filename.split(".")[-1]
-        file_name = f"{uid}_original.{ext}"
-        local_path = os.path.join("uploads", "base_resumes", file_name)
-        with open(local_path, "wb") as f:
-            f.write(content)
+        public_id = f"base_resumes/{uid}_original_{os.urandom(4).hex()}"
         
-        url = f"http://localhost:8000/uploads/base_resumes/{file_name}"
+        # Upload the bytes to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            content,
+            resource_type="auto",
+            public_id=public_id,
+            format=ext
+        )
+        url = upload_result["secure_url"]
     return text, url
 
 @app.post("/onboard")

@@ -27,7 +27,7 @@ export default function Profile() {
       try {
         setFetching(true);
         const token = await user.getIdToken();
-        const res = await axios.get('http://localhost:8000/profile', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = res.data;
@@ -64,7 +64,7 @@ export default function Profile() {
 
     try {
       const token = await user.getIdToken();
-      await axios.patch('http://localhost:8000/profile', data, {
+      await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/profile`, data, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

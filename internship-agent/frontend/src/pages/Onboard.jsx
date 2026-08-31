@@ -42,7 +42,7 @@ export default function Onboard() {
 
     try {
       const token = await auth.currentUser?.getIdToken();
-      await axios.post('http://localhost:8000/onboard', data, {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/onboard`, data, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

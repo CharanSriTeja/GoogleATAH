@@ -24,7 +24,7 @@ export default function ApplicationDetail() {
   useEffect(() => {
     const fetchApp = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/applications/${id}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/${id}`);
         setApp(res.data);
       } catch (err) {
         console.error(err);
@@ -38,8 +38,8 @@ export default function ApplicationDetail() {
     if (!newJobUrl) return;
     setAddingLink(true);
     try {
-      await axios.post(`http://localhost:8000/applications/${id}/add-link`, { job_url: newJobUrl });
-      const res = await axios.get(`http://localhost:8000/applications/${id}`);
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/${id}/add-link`, { job_url: newJobUrl });
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/${id}`);
       setApp(res.data);
       setNewJobUrl('');
     } catch (err) {
@@ -53,7 +53,7 @@ export default function ApplicationDetail() {
   const runAutofill = async () => {
     setAutofillLoading(true);
     try {
-      const res = await axios.post(`http://localhost:8000/applications/${id}/autofill`);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/${id}/autofill`);
       setAutofillResult(res.data);
     } catch (err) {
       console.error(err);
@@ -66,7 +66,7 @@ export default function ApplicationDetail() {
   const generateDraft = async () => {
     setDraftLoading(true);
     try {
-      const res = await axios.post(`http://localhost:8000/applications/${id}/outreach/draft`);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/${id}/outreach/draft`);
       setDraft(res.data);
       setEditedDraft(res.data);
     } catch (err) {
@@ -79,7 +79,7 @@ export default function ApplicationDetail() {
   const sendEmail = async () => {
     setSendLoading(true);
     try {
-      await axios.post(`http://localhost:8000/applications/${id}/outreach/send`, editedDraft);
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/${id}/outreach/send`, editedDraft);
       setSent(true);
       alert('Email sent successfully!');
     } catch (err) {

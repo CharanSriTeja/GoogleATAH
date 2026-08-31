@@ -41,40 +41,88 @@ def _do_autofill_sync(job_url: str, candidate_profile: dict, resume_pdf_path: st
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
-        page.goto(job_url, wait_until="networkidle", timeout=30000)
-
-        for field_key, patterns in FIELD_PATTERNS.items():
+        page.goto(job_url, wait_until="domcontentloaded", timeout=30000)  # Changed from networkidle
+        
+        # IMPROVEMENT 1: Use getByLabel instead of CSS selectors
+        label_mappings = {
+            "first_name": ["First Name", "First name", "Given Name"],
+            "last_name": ["Last Name", "Last name", "Family Name", "Surname"],
+            "email": ["Email", "Email Address", "E-mail"],
+            "phone": ["Phone", "Phone Number", "Mobile", "Cell Phone"],
+            "linkedin": ["LinkedIn", "LinkedIn Profile", "LinkedIn URL"],
+            "github": ["GitHub", "Github", "GitHub Profile", "Website", "Portfolio"],
+        }
+        
+        for field_key, label_options in label_mappings.items():
             value = values.get(field_key, "")
             if not value:
                 unfilled.append(field_key)
                 continue
+            
             located = False
-            for pattern in patterns:
-                for selector in [
-                    f'input[name*="{pattern}" i]',
-                    f'input[id*="{pattern}" i]',
-                ]:
-                    locator = page.locator(selector)
+            for label_text in label_options:
+                try:
+                    # Try getByLabel first (most reliable)
+                    locator = page.get_by_label(label_text, exact=False)
                     if locator.count() > 0:
                         locator.first.fill(value)
                         filled.append(field_key)
                         located = True
                         break
-                if located:
-                    break
+                except Exception:
+                    continue
+            
+            # Fallback to your original CSS selectors
+            if not located:
+                patterns = FIELD_PATTERNS[field_key]
+                for pattern in patterns:
+                    for selector in [
+                        f'input[name*="{pattern}" i]',
+                        f'input[id*="{pattern}" i]',
+                    ]:
+                        locator = page.locator(selector)
+                        if locator.count() > 0:
+                            locator.first.fill(value)
+                            filled.append(field_key)
+                            located = True
+                            break
+                    if located:
+                        break
+            
             if not located:
                 unfilled.append(field_key)
 
-        resume_input = page.locator('input[type="file"][name*="resume" i]')
-        if resume_input.count() > 0:
-            resume_input.first.set_input_files(resume_pdf_path)
-            filled.append("resume_upload")
-        else:
+        # IMPROVEMENT 2: Better resume upload detection
+        resume_selectors = [
+            'input[type="file"][name*="resume" i]',
+            'input[type="file"][name*="document" i]',
+            'input[type="file"][id*="resume" i]',
+            'input[type="file"]',  # Last resort - any file input
+        ]
+        
+        resume_uploaded = False
+        for selector in resume_selectors:
+            resume_input = page.locator(selector)
+            if resume_input.count() > 0:
+                resume_input.first.set_input_files(resume_pdf_path)
+                filled.append("resume_upload")
+                resume_uploaded = True
+                break
+        
+        if not resume_uploaded:
             unfilled.append("resume_upload")
 
+        # IMPROVEMENT 3: Wait for form to stabilize before screenshot
+        page.wait_for_timeout(2000)  # Let any validation messages appear
         page.screenshot(path=screenshot_path, full_page=True)
         
-        page.evaluate("alert('I have filled out what I could! Please review the form, submit it, and then CLOSE this browser window to continue the agent chat.')")
+        # IMPROVEMENT 4: Better UX message
+        page.evaluate("""
+            alert('✅ I filled: ' + '{filled}' + '\\n❌ Could not find: ' + '{unfilled}' + '\\n\\nPlease review, complete missing fields, and submit. Then close this window.')
+        """.format(
+            filled=", ".join(filled),
+            unfilled=", ".join(unfilled)
+        ))
         
         try:
             page.wait_for_event("close", timeout=0)

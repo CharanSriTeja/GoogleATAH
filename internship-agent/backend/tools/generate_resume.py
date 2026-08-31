@@ -8,11 +8,17 @@ from google import genai
 from tools.firestore_state import _app_collection, current_uid
 
 def save_local_pdf(local_path: str, destination_file_name: str) -> str:
-    """Save a file to the local uploads directory and return its local URL."""
-    dest_path = os.path.join("uploads", "resumes", destination_file_name)
-    shutil.copy2(local_path, dest_path)
-    url = f"http://localhost:8000/uploads/resumes/{destination_file_name}"
-    return url
+    """Save a file to Cloudinary and return its URL."""
+    import cloudinary.uploader
+    public_id = f"resumes/{destination_file_name.replace('.pdf', '')}_{os.urandom(4).hex()}"
+    
+    upload_result = cloudinary.uploader.upload(
+        local_path,
+        resource_type="auto",
+        public_id=public_id,
+        format="pdf"
+    )
+    return upload_result["secure_url"]
 
 def extract_bullets_from_resume_text(base_resume_text: str) -> list[str]:
     """Use Gemini to extract genuine experience/project bullet points from raw extracted resume text."""
